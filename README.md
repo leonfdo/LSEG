@@ -6,7 +6,6 @@ The flower exchange is a system which supports basic trading.
 
 Every order is replied with an Execution Report by the Exchange Application indicating the status of the order.
 
-![home_peak iperf](https://github.com/leonfdo/LSEG/assets/78163260/839a88da-ed84-4165-98d2-9b405d30de4f)
+![pic1](https://github.com/leonfdo/LSEG/assets/78163260/4d7488bb-61ce-48dd-9186-13bddc9ce865)
 
-
-![Capture](https://github.com/leonfdo/LSEG/assets/78163260/da821f81-2252-4a13-94b3-add990a9f8dd)
+![pic2](https://github.com/leonfdo/LSEG/assets/78163260/bb691bcd-34d8-4671-9f93-3742436dab99)
