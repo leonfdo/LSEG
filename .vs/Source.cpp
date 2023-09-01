@@ -97,24 +97,6 @@ public:
 
 
 
-//class Order {
-//	string client_order_id;
-//	string instrument;
-//	int side;
-//	double price;
-//	int quantity;
-//public:
-//	Order(const string Client_order_id, string Instrument, int Side, double Price, int Quantity) : client_order_id{ Client_order_id }, instrument{ Instrument }, side{ Side }, price{ Price }, quantity{ Quantity }{
-//	}
-//
-//	void disp() {
-//		cout << "Client_order_id :" << client_order_id << endl;
-//		cout << "Instrument :" << instrument << endl;
-//		cout << "Side :" << side << endl;
-//		cout << "Price :" << price << endl;
-//		cout << "Quantity :" << quantity << endl;
-//	}
-//};
 void print_books(const priority_queue<sell_inf, vector<sell_inf>, sell_inf>& sell_queue, const priority_queue<buy_inf, vector<buy_inf>, buy_inf>& buy_queue) {
 	cout << endl;
 	cout << "the sell book \n";
@@ -140,9 +122,12 @@ typedef map<string, pair<priority_queue<sell_inf, vector<sell_inf>, sell_inf>, p
 struct op_book {
 	inst_book book;
 
-	template <class t> void check(string name,string side,ofstream& executionReport,t row ) {
+	template <class t> void check(string name,string side,ofstream& executionReport,t row ,bool not_recur=true) {
 		if (book[name].first.empty() || book[name].second.empty()) {
-			executionReport << order::get_id() << "," << row.get_flowid() << "," << name<<","<< side << ",new," << row.get_quantity() << "," << row.get_price() << ",\n";
+			if (not_recur) {
+				executionReport << order::get_id() << "," << row.get_flowid() << "," << name << "," << side << ",new," << row.get_quantity() << "," << row.get_price() << ",\n";
+			}
+			else { return; }
 		}
 		else if (book[name].first.top().get_price() <= book[name].second.top().get_price()) {
 			if (book[name].first.top().get_quantity() < book[name].second.top().get_quantity()) {
@@ -151,16 +136,16 @@ struct op_book {
 				//book[name].second.top().update();
 				buy_inf temp=book[name].second.top();
 				temp.update(book[name].first.top().get_quantity());
-				book[name].first.pop();
 				book[name].second.pop();
 				book[name].second.push(temp);
 				//delete temp;
 				//book[name].second.top().update(book[name].second.top().get_quantity());
-				executionReport << order::get_id() << "," << book[name].second.top().get_flowid() << "," << name <<",1"<< ",pfill," << book[name].second.top().get_quantity() << "," << book[name].second.top().get_price() << ",\n";
+				executionReport << order::get_id() << "," << book[name].second.top().get_flowid() << "," << name <<",1"<< ",pfill," << book[name].first.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
+				book[name].first.pop();
 			}
 			else if(book[name].first.top().get_quantity() == book[name].second.top().get_quantity()) {
 				executionReport << order::get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" <<",fill," << book[name].first.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
-				executionReport << order::get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" <<",fill," << book[name].second.top().get_quantity() << "," << book[name].second.top().get_price() << ",\n";
+				executionReport << order::get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" <<",fill," << book[name].second.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
 				book[name].first.pop();
 				book[name].second.pop();
 			}
@@ -169,12 +154,18 @@ struct op_book {
 				sell_inf temp = book[name].first.top();
 				temp.update(book[name].second.top().get_quantity());
 				book[name].first.pop();
-				book[name].second.pop();
 				book[name].first.push(temp);
-				executionReport << order::get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",1" <<",pfill,"  << book[name].first.top().get_quantity() << ", " << book[name].first.top().get_price() << ", \n";
-		
+				executionReport << order::get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" <<",pfill,"  << book[name].second.top().get_quantity() << ", " << book[name].second.top().get_price() << ", \n";
+				book[name].second.pop();
+				check<sell_inf>(name, side, executionReport, temp,false);
 			}
 
+		}
+		else {
+			if (not_recur) {
+				executionReport << order::get_id() << "," << row.get_flowid() << "," << name << "," << side << ",new," << row.get_quantity() << "," << row.get_price() << ",\n";
+			}
+			else { return; }
 		}
 	}
 };
@@ -232,10 +223,10 @@ int main() {
 			getline(line, Instrument, ',');
 			getline(line, side, ',');
 			Side = stoi(side);
-			getline(line, price, ',');
-			Price = stod(price);
 			getline(line, quantity, ',');
 			Quantity = stoi(quantity);
+			getline(line, price, ',');
+			Price = stod(price);
 
 
 			//Order flower_sale(Client_order_id, Instrument, Side, Price, Quantity);
