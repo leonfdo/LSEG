@@ -1,9 +1,10 @@
 OrderID,Client_order_id,Instrument,Side,Execution_Status,Quantity,Price,Reason_If_Rejected
 ord1,aa13,Rose,1,new,100,55,
 ord2,aa14,Rose,1,new,100,65,
-ord3,aa14,Rose,1,fill,100,65,
-ord4,aa15,Rose,2,pfill,100, 65, 
-ord5,aa13,Rose,1,fill,100,55,
-ord6,aa15,Rose,2,pfill,100, 55, 
-ord7,aa15,Rose,2,fill,100,1,
-ord8,aa16,Rose,1,fill,100,1,
+ord3,aa15,Rose,2,pfill,100, 65, 
+ord2,aa14,Rose,1,fill,100,65,
+ord3,aa15,Rose,2,pfill,100, 55, 
+ord1,aa13,Rose,1,fill,100,55,
+ord4,aa16,Rose,1,fill,100,1,
+ord3,aa15,Rose,2,fill,100,1,
+ord5,aa17,,2,Rejected,,55,Missing Fields

@@ -16,6 +16,7 @@ protected:
 	int flow_quantity;
 	string flow_id;
 	int select;
+	int ID=0;
 public:
 	order() {
 		flow_price = 0;
@@ -30,9 +31,18 @@ public:
 		select = select;
 	}
 
-	static string get_id() {
-		nu_orders += 1;
-		return "ord" + to_string(nu_orders);
+	 string get_id() const{
+		return "ord" + to_string(ID);
+	}
+
+	 static string  get_static_id() {
+		 order::nu_orders += 1;
+		 return "ord" + to_string(order::nu_orders);
+	 }
+
+	void set_id() {
+		order::nu_orders += 1;
+		ID = order::nu_orders;
 	}
 
 	double get_price() const {
@@ -125,13 +135,12 @@ struct op_book {
 	template <class t> void check(string name,string side,ofstream& executionReport,t row ,bool not_recur=true) {
 		if (book[name].first.empty() || book[name].second.empty()) {
 			if (not_recur) {
-				executionReport << order::get_id() << "," << row.get_flowid() << "," << name << "," << side << ",new," << row.get_quantity() << "," << row.get_price() << ",\n";
+				executionReport << row.get_id() << "," << row.get_flowid() << "," << name << "," << side << ",new," << row.get_quantity() << "," << row.get_price() << ",\n";
 			}
 			else { return; }
 		}
 		else if (book[name].first.top().get_price() <= book[name].second.top().get_price()) {
 			if (book[name].first.top().get_quantity() < book[name].second.top().get_quantity()) {
-				executionReport << order::get_id() << "," << book[name].first.top().get_flowid() << "," << name<< ",2"<<",fill," << book[name].first.top().get_quantity() << ", " << book[name].first.top().get_price() << ", \n";
 				//book[name].first.pop();
 				//book[name].second.top().update();
 				buy_inf temp=book[name].second.top();
@@ -140,22 +149,23 @@ struct op_book {
 				book[name].second.push(temp);
 				//delete temp;
 				//book[name].second.top().update(book[name].second.top().get_quantity());
-				executionReport << order::get_id() << "," << book[name].second.top().get_flowid() << "," << name <<",1"<< ",pfill," << book[name].first.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
+				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name <<",1"<< ",pfill," << book[name].first.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
+				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" << ",fill," << book[name].first.top().get_quantity() << ", " << book[name].first.top().get_price() << ", \n";
 				book[name].first.pop();
 			}
 			else if(book[name].first.top().get_quantity() == book[name].second.top().get_quantity()) {
-				executionReport << order::get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" <<",fill," << book[name].first.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
-				executionReport << order::get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" <<",fill," << book[name].second.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
+				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" <<",fill," << book[name].second.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
+				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" << ",fill," << book[name].first.top().get_quantity() << "," << book[name].first.top().get_price() << ",\n";
 				book[name].first.pop();
 				book[name].second.pop();
 			}
 			else {
-				executionReport << order::get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" <<",fill," << book[name].second.top().get_quantity() << "," << book[name].second.top().get_price() << ",\n";
 				sell_inf temp = book[name].first.top();
 				temp.update(book[name].second.top().get_quantity());
 				book[name].first.pop();
 				book[name].first.push(temp);
-				executionReport << order::get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" <<",pfill,"  << book[name].second.top().get_quantity() << ", " << book[name].second.top().get_price() << ", \n";
+				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" <<",pfill,"  << book[name].second.top().get_quantity() << ", " << book[name].second.top().get_price() << ", \n";
+				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" << ",fill," << book[name].second.top().get_quantity() << "," << book[name].second.top().get_price() << ",\n";
 				book[name].second.pop();
 				check<sell_inf>(name, side, executionReport, temp,false);
 			}
@@ -163,7 +173,7 @@ struct op_book {
 		}
 		else {
 			if (not_recur) {
-				executionReport << order::get_id() << "," << row.get_flowid() << "," << name << "," << side << ",new," << row.get_quantity() << "," << row.get_price() << ",\n";
+				executionReport << row.get_id() << "," << row.get_flowid() << "," << name << "," << side << ",new," << row.get_quantity() << "," << row.get_price() << ",\n";
 			}
 			else { return; }
 		}
@@ -207,7 +217,7 @@ int main() {
 		return 1; // Exit the program with an error code
 	}
 
-	executionReport << "OrderID,Client_order_id,Instrument,Side,Execution_Status,Quantity,Price,Reason_If_Rejected\n";
+	executionReport << "OrderID,Client_order_id,Instrument,Side,Execution_Status,Quantity,Price,Reason_If_Rejected,Transaction_time\n";
 
 
 
@@ -235,43 +245,44 @@ int main() {
 			//flower_sale.disp();
 			if (Client_order_id.empty() || Instrument.empty() || side.empty() || price.empty() || quantity.empty()) {
 				cout << "Error: Mandotory fields Missing." << endl;
-				executionReport <<order::get_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Missing Fields\n";
+				executionReport <<order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Missing Fields\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 			if (find(validInstruments.begin(), validInstruments.end(), Instrument) == validInstruments.end()) {
 				cout << "Error: Invalid instrument '" << Instrument << "'. To Rejection Notice" << endl;
-				executionReport << order::get_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Instrument\n";
+				executionReport << order::get_static_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Instrument\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 			if (Side != 1 && Side != 2) {
 				cout << "Error: Invalid side '" << Side << "'. Side should be 1 (buy) or 2 (sell)." << endl;
-				executionReport << order::get_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invali dSide\n";
+				executionReport << order::get_static_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invali dSide\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 			// Check if the price is greater than 0
 			if (Price <= 0) {
 				cout << "Error: Invalid price '" << Price << "'. Price should be greater than 0." << endl;
-				executionReport << order::get_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Price\n";
+				executionReport << order::get_static_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Price\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 
 			// Check if the quantity is a multiple of 10
 			if (Quantity % 10 != 0) {
 				cout << "Error: Invalid quantity '" << Quantity << "'. Quantity should be a multiple of 10." << endl;
-				executionReport << order::get_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Quantity\n";
+				executionReport << order::get_static_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Quantity\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 
 			// Check if the quantity is within the range (min = 10 max = 1000)
 			if (Quantity < 10 || Quantity > 1000) {
 				cout << "Error: Invalid quantity '" << Quantity << "'. Quantity should be in the range of 10 to 1000." << endl;
-				executionReport << order::get_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Quantity Out Of Range\n";
+				executionReport << order::get_static_id() <<"," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Quantity Out Of Range\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 
 
 			if (Side == 2) {
 				sell_inf sell_row(Price, Quantity, Client_order_id);
+				sell_row.set_id();
 				instrument_books.book[Instrument].first.push(sell_row); // Update sell book
 				instrument_books.check<sell_inf>(Instrument,side,executionReport,sell_row);
 				//if(instrument_books[Instrument].second.top()>=instrument_books[Instrument].first.top())
@@ -279,6 +290,7 @@ int main() {
 			}
 			else {
 				buy_inf buy_row(Price, Quantity, Client_order_id);
+				buy_row.set_id();
 				instrument_books.book[Instrument].second.push(buy_row); // Update buy book
 				instrument_books.check<buy_inf>(Instrument,side,executionReport,buy_row);
 				//executionReport << order::get_id() <<"," << Client_order_id << "," << Instrument << "," << side << "," << "Executed," << Quantity << "," << Price << ",\n";
