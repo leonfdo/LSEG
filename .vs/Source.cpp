@@ -13,13 +13,13 @@
 using namespace std;
 
 
+
 class order {
 protected:
 	static int nu_orders;
 	double flow_price;
 	int flow_quantity;
 	string flow_id;
-	int select;
 	int ID = 0;
 public:
 	order() {
@@ -27,14 +27,13 @@ public:
 		flow_quantity = 0;
 		flow_id = "";
 	}
-
-	order(double fp, int fq, string fi, int select = 0) {
+	//initiating order attributes
+	order(double fp, int fq, string fi) {
 		flow_price = fp;
 		flow_quantity = fq;
 		flow_id = fi;
-		select = select;
 	}
-
+	//for the unique orderID
 	string get_id() const {
 		return "ord" + to_string(ID);
 	}
@@ -61,6 +60,7 @@ public:
 		return flow_id;
 	}
 
+	//Update order quantity after PFills
 	void update(const int a) {
 		flow_quantity = flow_quantity - a;
 	}
@@ -73,14 +73,15 @@ order a;
 int order::nu_orders = 0;
 
 class sell_inf :public order {
-	int id;
+	//int id;
 public:
 	sell_inf() :order() {}
-
+	//initializing sell order attributes
 	sell_inf(double fp, int fq, string fi) :order(fp, fq, fi) {
-		id = nu_orders;
+		//id = nu_orders;
 	}
 
+	//to sort by descending order of price
 	bool operator()(const sell_inf& a, const sell_inf& b) {
 		return a.flow_price > b.flow_price;
 	}
@@ -89,14 +90,15 @@ public:
 
 
 class buy_inf :public order {
-	int id;
+	//int id;
 public:
 	buy_inf() :order() {};
-
+	//initializing buy order attributes
 	buy_inf(double fp, int fq, string fi) :order(fp, fq, fi) {
-		id = nu_orders;
+		//id = nu_orders;
 	}
 
+	//to sort by ascending order of price
 	bool operator()(const buy_inf& a, const buy_inf& b) {
 		return a.flow_price < b.flow_price;
 	}
@@ -104,12 +106,10 @@ public:
 };
 
 
-
+//Function to get current time
 string Get_time() {
+	// Get the current time
 	auto now = chrono::system_clock::now();
-
-	// Define Sri Lanka Standard Time (UTC+5:30)
-	//chrono::minutes offset(330); // 5 hours and 30 minutes
 
 	// Adjust the current time to Sri Lanka Standard Time
 	auto local_time = now; //+ offset;
@@ -134,17 +134,18 @@ string Get_time() {
 	return timestamp.str();
 }
 
-
+//Defining the instrument books
 typedef map<string, pair<priority_queue<sell_inf, vector<sell_inf>, sell_inf>, priority_queue<buy_inf, vector<buy_inf>, buy_inf>>> inst_book;
 
 struct op_book {
 	inst_book book;
 
+	//Function to match orders
 	template <class t> void check(string name, string side, ofstream& executionReport, t row, bool not_recur = true) {
 		string time_str = Get_time();
 		if (book[name].first.empty() || book[name].second.empty()) {
 			if (not_recur) {
-				executionReport << row.get_id() << "," << row.get_flowid() << "," << name << "," << side << ",New," << row.get_quantity() << "," << to_string(row.get_price()) << "," << " " << "," << time_str << ",\n";
+				executionReport << row.get_id() << "," << row.get_flowid() << "," << name << "," << side << ",New," << row.get_quantity() << "," << fixed << setprecision(2) << row.get_price() << "," << " " << "," << time_str << ",\n";
 			}
 			else { return; }
 		}
@@ -158,13 +159,13 @@ struct op_book {
 				book[name].second.push(temp);
 				//delete temp;
 				//book[name].second.top().update(book[name].second.top().get_quantity());
-				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" << ",Pfill," << book[name].first.top().get_quantity() << "," << book[name].first.top().get_price() << "," << "" << "," << time_str << ",\n";
-				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" << ",Fill," << book[name].first.top().get_quantity() << ", " << book[name].first.top().get_price() << "," << "" << "," << time_str << ", \n";
+				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" << ",Pfill," << book[name].first.top().get_quantity() << "," << fixed << setprecision(2) << book[name].first.top().get_price() << "," << "" << "," << time_str << ",\n";
+				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" << ",Fill," << book[name].first.top().get_quantity() << ", " << fixed << setprecision(2) << book[name].first.top().get_price() << "," << "" << "," << time_str << ", \n";
 				book[name].first.pop();
 			}
 			else if (book[name].first.top().get_quantity() == book[name].second.top().get_quantity()) {
-				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" << ",Fill," << book[name].second.top().get_quantity() << "," << book[name].first.top().get_price() << "," << "" << "," << time_str << ",\n";
-				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" << ",Fill," << book[name].first.top().get_quantity() << "," << book[name].first.top().get_price() << "," << "" << "," << time_str << ",\n";
+				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" << ",Fill," << book[name].second.top().get_quantity() << "," << fixed << setprecision(2) << book[name].first.top().get_price() << "," << "" << "," << time_str << ",\n";
+				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" << ",Fill," << book[name].first.top().get_quantity() << "," << fixed << setprecision(2) << book[name].first.top().get_price() << "," << "" << "," << time_str << ",\n";
 				book[name].first.pop();
 				book[name].second.pop();
 			}
@@ -173,8 +174,8 @@ struct op_book {
 				temp.update(book[name].second.top().get_quantity());
 				book[name].first.pop();
 				book[name].first.push(temp);
-				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" << ",Pfill," << book[name].second.top().get_quantity() << ", " << book[name].second.top().get_price() << "," << "" << "," << time_str << ", \n";
-				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" << ",Fill," << book[name].second.top().get_quantity() << "," << book[name].second.top().get_price() << "," << "" << "," << time_str << ",\n";
+				executionReport << book[name].first.top().get_id() << "," << book[name].first.top().get_flowid() << "," << name << ",2" << ",Pfill," << book[name].second.top().get_quantity() << ", " << fixed << setprecision(2) << book[name].second.top().get_price() << "," << "" << "," << time_str << ", \n";
+				executionReport << book[name].second.top().get_id() << "," << book[name].second.top().get_flowid() << "," << name << ",1" << ",Fill," << book[name].second.top().get_quantity() << "," << fixed << setprecision(2) << book[name].second.top().get_price() << "," << "" << "," << time_str << ",\n";
 				book[name].second.pop();
 				check<sell_inf>(name, side, executionReport, temp, false);
 			}
@@ -182,7 +183,7 @@ struct op_book {
 		}
 		else {
 			if (not_recur) {
-				executionReport << row.get_id() << "," << row.get_flowid() << "," << name << "," << side << ",New," << row.get_quantity() << "," << row.get_price() << "," << " " << "," << time_str << ",\n";
+				executionReport << row.get_id() << "," << row.get_flowid() << "," << name << "," << side << ",New," << row.get_quantity() << "," << fixed << setprecision(2) << row.get_price() << "," << " " << "," << time_str << ",\n";
 			}
 			else { return; }
 		}
@@ -195,6 +196,7 @@ int main() {
 	op_book instrument_books;
 	instrument_books.book = book;
 
+	//Priority queues for buy and sell orders
 	priority_queue<sell_inf, vector<sell_inf>, sell_inf> sell_queue;
 	priority_queue<buy_inf, vector<buy_inf>, buy_inf> buy_queue;
 
@@ -215,24 +217,27 @@ int main() {
 
 	cout << "Enter the file name:";
 	cin >> file_name;
-	file_location = "C:\\Users\\leonf\\OneDrive\\Desktop\\LSEG\\Orders\\" + file_name;
+	//Reading file location
+	file_location = "Orders\\" + file_name;
 
 
 
-
-	ofstream executionReport("C:\\Users\\leonf\\OneDrive\\Desktop\\LSEG\\Reports\\report.csv");
+	//Writing file destination
+	ofstream executionReport("Reports\\execution_report.csv");
+	// Exit the program with an error code if opened
 	if (!executionReport.is_open()) {
-		cout << "Error: Failed to create the execution report file." << "\n";
-		return 1; // Exit the program with an error code
+		cout << "The given path is wrong , Please enter the correct path" << "\n";
+		return 1;
 	}
-
+	//Header of the execution report
 	executionReport << "OrderID,Client_order_id,Instrument,Side,Execution_Status,Quantity,Price,Reason_If_Rejected,Transaction_time\n";
 
 
 
-
+	//The list of valid instruments
 	vector<string> validInstruments = { "Rose", "Lavender","Lotus","Tulip","Orchid" };
 
+	//Reading the file
 	fstream myfile;
 	myfile.open(file_location);
 	if (myfile.is_open()) {
@@ -248,8 +253,9 @@ int main() {
 			getline(line, price, ',');
 			Price = stod(price);
 
-
+			//Getting the current time
 			string time_str = Get_time();
+
 
 			//Order flower_sale(Client_order_id, Instrument, Side, Price, Quantity);
 			//sell_inf sell_row(Price, Quantity, Client_order_id);
@@ -257,42 +263,42 @@ int main() {
 			//flower_sale.disp();
 			if (Client_order_id.empty() || Instrument.empty() || side.empty() || price.empty() || quantity.empty()) {
 				//cout << "Error: Mandotory fields Missing." << "\n";
-				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Missing Fields," << time_str << "\n";
+				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << Price << ",Missing Fields," << time_str << "\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
-			if (find(validInstruments.begin(), validInstruments.end(), Instrument) == validInstruments.end()) {
+			else if (find(validInstruments.begin(), validInstruments.end(), Instrument) == validInstruments.end()) {
 				//cout << "Error: Invalid instrument '" << Instrument << "'. To Rejection Notice" << "\n";
-				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Instrument," << time_str << "\n";
+				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << Price << ",Invalid Instrument," << time_str << "\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
-			if (Side != 1 && Side != 2) {
+			else if (Side != 1 && Side != 2) {
 				//cout << "Error: Invalid side '" << Side << "'. Side should be 1 (buy) or 2 (sell)." << "\n";
-				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Side," << time_str << "\n";
+				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << fixed << setprecision(2) << Price << ",Invalid Side," << time_str << "\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 			// Check if the price is greater than 0
-			if (Price <= 0) {
+			else if (Price <= 0) {
 				//cout << "Error: Invalid price '" << Price << "'. Price should be greater than 0." <<"\n";
-				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Price," << time_str << "\n";
+				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << fixed << setprecision(2) << Price << ",Invalid Price," << time_str << "\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 
 			// Check if the quantity is a multiple of 10
-			if (Quantity % 10 != 0) {
+			else if (Quantity % 10 != 0) {
 				//cout << "Error: Invalid quantity '" << Quantity << "'. Quantity should be a multiple of 10." << "\n";
-				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Invalid Quantity," << time_str << "\n";
+				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << fixed << setprecision(2) << Price << ",Invalid Quantity," << time_str << "\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 
 			// Check if the quantity is within the range (min = 10 max = 1000)
-			if (Quantity < 10 || Quantity > 1000) {
+			else if (Quantity < 10 || Quantity > 1000) {
 				cout << "Error: Invalid quantity '" << Quantity << "'. Quantity should be in the range of 10 to 1000." << "\n";
-				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << price << ",Quantity Out Of Range," << time_str << "\n";
+				executionReport << order::get_static_id() << "," << Client_order_id << "," << Instrument << "," << side << ",Rejected,," << fixed << setprecision(2) << Price << ",Quantity Out Of Range," << time_str << "\n";
 				continue; // Skip the current iteration and proceed with the next line in the file
 			}
 
 
-			if (Side == 2) {
+			else if (Side == 2) {
 				sell_inf sell_row(Price, Quantity, Client_order_id);
 				sell_row.set_id();
 				instrument_books.book[Instrument].first.push(sell_row); // Update sell book
@@ -312,17 +318,19 @@ int main() {
 
 		}
 
-		// Print the updated books for each instrument after processing all entries
-		cout << "Separate Exchange Application Files"<<'\n';
+		// Writing the exchange applications for each instrument to a CSV file after processing all entries.
+		cout << "Separate Exchange Application Files" << '\n';
+
 		for (auto& instrument_book : instrument_books.book) {
-			file_location = "C:\\Users\\leonf\\OneDrive\\Desktop\\LSEG\\Reports\\exchange_";
+			//Exchange application file location
+			file_location = "Reports\\exchange_";
 			const string& instrument = instrument_book.first;
 			auto& sell_queue = instrument_book.second.first;
 			auto& buy_queue = instrument_book.second.second;
 			file_location = file_location + instrument + ".csv";
 			cout << file_location << "\n";
-
-			ofstream exchange(file_location); 
+			// Open the file
+			ofstream exchange(file_location);
 
 			if (exchange.is_open()) {
 				exchange << instrument << "\n ";
@@ -332,7 +340,7 @@ int main() {
 				// Continue writing until both queues are empty
 				while (!buy_queue.empty() || !sell_queue.empty()) {
 					if (!buy_queue.empty()) {
-						exchange << buy_queue.top().get_id() << "," << buy_queue.top().get_quantity()<<","<< buy_queue.top().get_price()<<",,";
+						exchange << buy_queue.top().get_id() << "," << buy_queue.top().get_quantity() << "," << fixed << setprecision(2) << buy_queue.top().get_price() << ",,";
 						buy_queue.pop();
 					}
 					else {
@@ -340,7 +348,7 @@ int main() {
 					}
 
 					if (!sell_queue.empty()) {
-						exchange << sell_queue.top().get_price() << "," << sell_queue.top().get_quantity() << "," << sell_queue.top().get_id() << "\n";
+						exchange << sell_queue.top().get_price() << "," << sell_queue.top().get_quantity() << "," << fixed << setprecision(2) << sell_queue.top().get_id() << "\n";
 						sell_queue.pop();
 					}
 					else {
@@ -351,7 +359,7 @@ int main() {
 				exchange.close(); // Close the file when finished with this instrument
 			}
 			else {
-				cerr << "Failed to open file: " << file_location << "\n";
+				cerr << "The given path is wrong, Please enter the correct path " << file_location << "\n";
 			}
 		}
 
@@ -359,11 +367,11 @@ int main() {
 
 	}
 	else {
-		cout << "Could not open the file\n";
+		cout << "The given path is wrong , Please enter the correct path\n";
 	}
 
 
 
 
 	executionReport.close();
-}
+};
